@@ -7,10 +7,18 @@ BigInteger::BigInteger() {
 
 
 BigInteger::BigInteger(int value) {
-    if (value < 0) { negative_ = true; value = -value; }
-    else negative_ = false;
-    if (value == 0) digits_.push_back(0);
-    else while (value > 0) { digits_.push_back(value % 10); value /= 10; }
+    negative_ = value < 0;
+    long long abs_value = value; 
+    if (abs_value < 0) abs_value = -abs_value;
+    
+    if (abs_value == 0) {
+        digits_.push_back(0);
+    } else {
+        while (abs_value > 0) {
+            digits_.push_back(abs_value % 10);
+            abs_value /= 10;
+        }
+    }
 }
 
 BigInteger::BigInteger(long long value) {
@@ -42,8 +50,9 @@ BigInteger BigInteger::operator+(const BigInteger& rhs) const {
         result.negative_ = negative_;
         result.digits_.clear();
         int carry = 0;
-        int n = digits_.size() > rhs.digits_.size() ? digits_.size() : rhs.digits_.size();
-        for (int i = 0; i < n; ++i) {
+    
+        size_t n = digits_.size() > rhs.digits_.size() ? digits_.size() : rhs.digits_.size();
+        for (size_t i = 0; i < n; ++i) {
             int sum = carry;
             if (i < digits_.size()) sum += digits_[i];
             if (i < rhs.digits_.size()) sum += rhs.digits_[i];
@@ -75,7 +84,8 @@ BigInteger BigInteger::operator-(const BigInteger& rhs) const {
         bool need_swap = false;
         if (digits_.size() < rhs.digits_.size()) need_swap = true;
         else if (digits_.size() == rhs.digits_.size()) {
-            for (int i = digits_.size() - 1; i >= 0; --i) {
+    
+            for (int i = static_cast<int>(digits_.size()) - 1; i >= 0; --i) {
                 if (digits_[i] < rhs.digits_[i]) { need_swap = true; break; }
                 else if (digits_[i] > rhs.digits_[i]) break;
             }
@@ -89,13 +99,14 @@ BigInteger BigInteger::operator-(const BigInteger& rhs) const {
         if (need_swap) result.negative_ = !result.negative_;
 
         result.digits_.clear();
-        int carry = 0;
-        for (int i = 0; i < a->digits_.size(); ++i) {
-            int sub = a->digits_[i] - carry;
-            if (i < b->digits_.size()) sub -= b->digits_[i];
-            if (sub < 0) { sub += 10; carry = 1; }
-            else carry = 0;
-            result.digits_.push_back(sub);
+        int borrow = 0; 
+       
+        for (size_t i = 0; i < a->digits_.size(); ++i) {
+            int diff = a->digits_[i] - borrow;
+            if (i < b->digits_.size()) diff -= b->digits_[i];
+            if (diff < 0) { diff += 10; borrow = 1; }
+            else borrow = 0;
+            result.digits_.push_back(diff);
         }
 
         while (result.digits_.size() > 1 && result.digits_.back() == 0)
@@ -107,15 +118,20 @@ BigInteger BigInteger::operator-(const BigInteger& rhs) const {
     return result;
 }
 
+
 BigInteger BigInteger::operator*(const BigInteger& rhs) const {
     BigInteger result;
     result.digits_.assign(digits_.size() + rhs.digits_.size(), 0);
     result.negative_ = (negative_ != rhs.negative_);
 
-    for (int i = 0; i < digits_.size(); ++i) {
+   
+    for (size_t i = 0; i < digits_.size(); ++i) {
         int carry = 0;
-        for (int j = 0; j < rhs.digits_.size() || carry; ++j) {
-            int cur = result.digits_[i + j] + digits_[i] * (j < rhs.digits_.size() ? rhs.digits_[j] : 0) + carry;
+      
+        for (size_t j = 0; j < rhs.digits_.size() || carry; ++j) {
+            int cur = result.digits_[i + j] + 
+                      digits_[i] * (j < rhs.digits_.size() ? rhs.digits_[j] : 0) + 
+                      carry;
             result.digits_[i + j] = cur % 10;
             carry = cur / 10;
         }
